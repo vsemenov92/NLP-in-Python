@@ -1,0 +1,84 @@
+import numpy as np
+import pandas as pd
+df = pd.read_csv('../TextFiles/smsspamcollection.tsv', sep='\t')
+# Check for missing info
+df.isnull().sum()
+# Not missing any info
+df['label'].unique()
+df['label'].value_counts()
+
+#Visualization for sms length
+import matplotlib.pyplot as plt
+%matplotlib inline
+
+plt.xscale('log')
+bins = 1.15**(np.arange(0,50))
+plt.hist(df[df['label']=='ham']['length'],bins=bins,alpha=0.8)
+plt.hist(df[df['label']=='spam']['length'],bins=bins,alpha=0.8)
+plt.legend(('ham','spam'))
+plt.show()
+#Spam messages are usually much longer than ham messages
+
+#Visualization for sms punctuation
+plt.xscale('log')
+bins = 1.5**(np.arange(0,15))
+plt.hist(df[df['label']=='ham']['punct'],bins=bins,alpha=0.8)
+plt.hist(df[df['label']=='spam']['punct'],bins=bins,alpha=0.8)
+plt.legend(('ham','spam'))
+plt.show()
+
+from sklearn.model_selection import train_test_split
+
+# X is feature data
+X = df[['length','punct']]
+# y is label
+y = df['label']
+
+# Shift tab for syntax and examples
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+X_train.shape
+X_test.shape
+y_test.shape
+
+# import model
+from sklearn.linear_model import LogisticRegression
+
+# create instance of model
+lr_model = LogisticRegression(solver='lbfgs')
+
+# fit model to training data
+lr_model.fit(X_train,y_train)
+
+from sklearn import metrics
+
+predictions = lr_model.predict(X_test)
+print(metrics.confusion_matrix(y_test,predictions))
+# Add labels:
+df = pd.DataFrame(metrics.confusion_matrix(y_test,predictions), index=['ham','spam'], columns=['ham','spam'])
+df
+
+print(metrics.classification_report(y_test,predictions))
+print(metrics.accuracy_score(y_test,predictions))
+
+from sklearn.naive_bayes import MultinomialNB
+
+nb_model = MultinomialNB()
+
+nb_model.fit(X_train,y_train)
+
+predictions_nb = nb_model.predict(X_test)
+
+print(metrics.confusion_matrix(y_test,predictions_nb))
+
+print(metrics.classification_report(y_test,predictions_nb))
+
+from sklearn.svm import SVC
+
+svc_model = SVC(gamma='auto')
+
+svc_model.fit(X_train, y_train)
+
+svc_pred = svc_model.predict(X_test)
+
+print(metrics.confusion_matrix(y_test,svc_pred))
